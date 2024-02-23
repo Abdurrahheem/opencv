@@ -618,6 +618,310 @@ TEST(Layer_LSTM_Test_Accuracy_with_, HiddenParams)
     normAssert(h_t_reference, outputs[0]);
 }
 
+TEST(Layer_Reshape_1d_Test, Accuracy)
+{
+    LayerParams lp;
+    lp.type = "Reshape";
+    lp.name = "reshapeLayer";
+    // Set axis to 0 to start reshaping from the first dimension
+    lp.set("axis", 0);
+    // Set num_axes to -1 to indicate all following axes are included in the reshape
+    lp.set("num_axes", -1);
+    // Correctly setting the new shape to reshape a 1D tensor with 6 elements into a 2x3 2D tensor
+    int newShape[] = {2, 3};
+    lp.set("dim", DictValue::arrayInt(newShape, 2));
+
+    Ptr<ReshapeLayer> layer = ReshapeLayer::create(lp);
+
+    // Correcting the input shape to have 6 elements
+    std::vector<int> input_shape = {6};
+    std::vector<int> output_shape = {2, 3};
+
+    // Creating an input tensor with 6 elements
+    float inputData[] = {1, 2, 3, 4, 5, 6};
+    cv::Mat input(1, input_shape.data(), CV_32F, inputData);
+
+    // Reference output tensor
+    float outputData[] = {1, 2, 3, 4, 5, 6};
+    cv::Mat output_ref(2, output_shape.data(), CV_32F, outputData);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    // Assuming normAssert is defined elsewhere as it's not a standard OpenCV or GoogleTest function.
+    normAssert(output_ref, outputs[0]);
+}
+
+// TEST(Layer_Reshape_1d_Test, Accuracy)
+// {
+//     LayerParams lp;
+//     lp.type = "Reshape";
+//     lp.name = "reshapeLayer";
+//     lp.set("axis", 0);
+//     lp.set("num_axes", 1);
+//     lp.set("dim", DictValue::arrayInt(3));
+
+//     Ptr<ReshapeLayer> layer = ReshapeLayer::create(lp);
+
+//     std::vector<int> input_shape = {3};
+//     std::vector<int> output_shape = {2, 3};
+
+//     cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+//     cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
+
+//     std::vector<Mat> inputs{input};
+//     std::vector<Mat> outputs;
+
+//     runLayer(layer, inputs, outputs);
+
+//     ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+//     normAssert(output_ref, outputs[0]);
+
+// }
+
+
+// WORKING FOR 1D
+TEST(Layer_Permute_1d_Test, Accuracy)
+{
+    std::cout << "permute layer" << std::endl;
+    LayerParams lp;
+    lp.type = "Permute";
+    lp.name = "permuteLayer";
+
+    int order[] = {0}; // Since it's a 1D tensor, the order remains [0]
+    lp.set("order", DictValue::arrayInt(order, 1));
+
+
+    Ptr<PermuteLayer> layer = PermuteLayer::create(lp);
+
+    std::vector<int> input_shape = {3};
+    std::vector<int> output_shape = {3};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+    cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    normAssert(output_ref, outputs[0]);
+}
+
+// WORKING FOR 1D
+TEST(Layer_Split_1d_Test, Accuracy)
+{
+    LayerParams lp;
+    lp.type = "Split";
+    lp.name = "splitLayer";
+    int top_count = 2;
+    lp.set("top_count", top_count);
+
+    Ptr<SplitLayer> layer = SplitLayer::create(lp);
+
+
+    std::vector<int> input_shape = {3};
+    std::vector<int> output_shape = {3};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+    cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+
+    for (int i = 0; i < top_count; i++)
+    {
+        ASSERT_EQ(shape(output_ref), shape(outputs[i]));
+        normAssert(output_ref, outputs[i]);
+    }
+}
+
+// WORKING FOR 1D
+TEST(Layer_FullyConnected_1d_Test, Accuracy)
+{
+    LayerParams lp;
+    lp.type = "InnerProduct"; // Use "InnerProduct" which is another name for FullyConnected layers in some contexts
+    lp.name = "fullyConnectedLayer";
+    lp.set("num_output", 1);
+    lp.set("bias_term", false);
+
+    // Define the shape of the weights. For a FullyConnected layer with 3 input features and 1 output, the weights should have a shape of (1, 3).
+    Mat weights = Mat::ones(1, 3, CV_32F); // Assuming you want weights initialized to 1 for simplicity
+
+    // The blobs vector in LayerParams holds the weights (and optionally biases)
+    lp.blobs.push_back(weights);
+
+    Ptr<Layer> layer = LayerFactory::createLayerInstance("InnerProduct", lp); // Use a factory method to create the layer instance
+
+    std::vector<int> input_shape = {3};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0); // Initialize input with ones
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+
+    std::vector<int> output_shape = {1};
+    Mat output_ref = Mat(output_shape, CV_32F, 3.0);
+
+    // layer->finalize(inputs, outputs); // Prepare the layer for computation (optional depending on implementation)
+    // layer->forward(inputs, outputs); // Run forward pass
+
+    // Assuming you want to check the output
+    // ASSERT_EQ(outputs.size(), 1); // Ensure there is one output
+    // ASSERT_EQ(outputs[0].at<float>(0, 0), expected_value);
+    // ASSERT_EQ(outputs[0], expected_value);
+    normAssert(output_ref, outputs[0]);
+}
+
+
+// WORKING FOR 1D
+TEST(Layer_GatherElements_1d_Test, Accuracy)
+{
+    LayerParams lp;
+    lp.type = "GatherElements";
+    lp.name = "gatherElementsLayer";
+    lp.set("axis", 0);
+
+    Ptr<GatherElementsLayer> layer = GatherElementsLayer::create(lp);
+
+
+    std::vector<int> input_shape = {3};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+
+    std::vector<int> indices_shape = {1};
+    cv::Mat indices = cv::Mat(indices_shape, CV_32S, 0.0);
+
+    std::vector<int> output_shape = {1};
+    cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
+
+    std::vector<Mat> inputs{input, indices};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    normAssert(output_ref, outputs[0]);
+}
+
+// WORKING FOR 1D
+TEST(Layer_Concat_1d_Test, Accuracy)
+{
+    LayerParams lp;
+    lp.type = "Concat";
+    lp.name = "concatLayer";
+    lp.set("axis", 0);
+
+    Ptr<ConcatLayer> layer = ConcatLayer::create(lp);
+
+    std::vector<int> input_shape = {3};
+    std::vector<int> output_shape = {3 * input_shape[0]};
+
+    Mat input1 = cv::Mat(input_shape, CV_32F, 1.0);
+    Mat input2 = cv::Mat(input_shape, CV_32F, 2.0);
+    Mat input3 = cv::Mat(input_shape, CV_32F, 3.0);
+
+    float data[] = {1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0};
+    Mat output_ref = cv::Mat(output_shape, CV_32F, data);
+
+    std::vector<Mat> inputs{input1, input2, input3};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+    std::cout << "output: " << outputs[0] << std::endl;
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    normAssert(output_ref, outputs[0]);
+}
+
+// // NOT WORKING for 1D
+// TEST(Layer_GEMM_1d_Test, Accuracy)
+// {
+//     LayerParams lp;
+//     lp.type = "Gemm";
+//     lp.name = "gemmLayer";
+//     lp.set("alpha", 1.0);
+//     lp.set("beta", 1.0);
+//     lp.set("transpose_a", false);
+//     lp.set("transpose_b", false);
+
+//     Ptr<GemmLayer> layer = GemmLayer::create(lp);
+
+//     std::vector<int> input_shape = {3};
+//     std::vector<int> output_shape = {1};
+
+//     cv::Mat input1 = cv::Mat(input_shape, CV_32F, 1.0);
+//     cv::Mat input2 = cv::Mat(input_shape, CV_32F, 2.0);
+
+//     cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 6.0);
+
+//     std::vector<Mat> inputs{input1, input2};
+//     std::vector<Mat> outputs;
+
+//     runLayer(layer, inputs, outputs);
+//     ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+//     normAssert(output_ref, outputs[0]);
+// }
+
+// NOT WORKING: need more investigation
+// TEST(Layer_MatMul_1d_Test, Accuracy)
+// {
+//     LayerParams lp;
+//     lp.type = "MatMul";
+//     lp.name = "matMulLayer";
+//     lp.set("transpose_a", true);
+//     lp.set("transpose_b", false);
+
+//     Ptr<MatMulLayer> layer = MatMulLayer::create(lp);
+
+//     std::vector<int> input_shape = {3, 1};
+//     std::vector<int> output_shape = {3, 1};
+
+//     cv::Mat input1 = cv::Mat(input_shape, CV_32F, 1.0);
+//     cv::Mat input2 = cv::Mat(input_shape, CV_32F, 2.0);
+
+//     cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 2.0);
+
+//     std::vector<Mat> inputs{input1, input2};
+//     std::vector<Mat> outputs;
+
+//     runLayer(layer, inputs, outputs);
+//     ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+//     normAssert(output_ref, outputs[0]);
+// }
+
+
+// NOT WORKING: need more investigation
+// TEST(Layer_ScatterND_1d_Test, Accuracy)
+// {
+//     LayerParams lp;
+//     lp.type = "ScatterND";
+//     lp.name = "scatterNDLayer";
+
+//     Ptr<ScatterNDLayer> layer = ScatterNDLayer::create(lp);
+
+//     std::vector<int> input_shape = {3};
+//     std::vector<int> indices_shape = {1};
+
+//     cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+//     cv::Mat indices = cv::Mat(indices_shape, CV_32S, 0.0);
+//     cv::Mat updates = cv::Mat(indices_shape, CV_32F, 0.0);
+//     cv::Mat output_ref = cv::Mat(input_shape, CV_32F, 1.0);
+
+//     std::vector<Mat> inputs{updates, indices, input};
+//     std::vector<Mat> outputs;
+
+//     runLayer(layer, inputs, outputs);
+//     ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+//     normAssert(output_ref, outputs[0]);
+// }
+
 typedef testing::TestWithParam<tuple<int, int>> Layer_Gather_1d_Test;
 TEST_P(Layer_Gather_1d_Test, Accuracy) {
 
