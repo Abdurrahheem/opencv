@@ -617,7 +617,7 @@ TEST(Layer_LSTM_Test_Accuracy_with_, HiddenParams)
     Mat h_t_reference = blobFromNPY(_tf("lstm.hidden.output.npy"));
     normAssert(h_t_reference, outputs[0]);
 }
-
+// WORKING FOR 1D
 TEST(Layer_Reshape_1d_Test, Accuracy)
 {
     LayerParams lp;
@@ -654,33 +654,6 @@ TEST(Layer_Reshape_1d_Test, Accuracy)
     // Assuming normAssert is defined elsewhere as it's not a standard OpenCV or GoogleTest function.
     normAssert(output_ref, outputs[0]);
 }
-
-// TEST(Layer_Reshape_1d_Test, Accuracy)
-// {
-//     LayerParams lp;
-//     lp.type = "Reshape";
-//     lp.name = "reshapeLayer";
-//     lp.set("axis", 0);
-//     lp.set("num_axes", 1);
-//     lp.set("dim", DictValue::arrayInt(3));
-
-//     Ptr<ReshapeLayer> layer = ReshapeLayer::create(lp);
-
-//     std::vector<int> input_shape = {3};
-//     std::vector<int> output_shape = {2, 3};
-
-//     cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
-//     cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
-
-//     std::vector<Mat> inputs{input};
-//     std::vector<Mat> outputs;
-
-//     runLayer(layer, inputs, outputs);
-
-//     ASSERT_EQ(shape(output_ref), shape(outputs[0]));
-//     normAssert(output_ref, outputs[0]);
-
-// }
 
 
 // WORKING FOR 1D
