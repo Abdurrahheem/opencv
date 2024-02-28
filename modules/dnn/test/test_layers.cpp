@@ -617,6 +617,71 @@ TEST(Layer_LSTM_Test_Accuracy_with_, HiddenParams)
     Mat h_t_reference = blobFromNPY(_tf("lstm.hidden.output.npy"));
     normAssert(h_t_reference, outputs[0]);
 }
+
+typedef testing::TestWithParam<tuple<int>> Layer_Clip_1d_Test;
+TEST_P(Layer_Clip_1d_Test, Accuracy)
+{
+    int batch_size = get<0>(GetParam());
+
+    LayerParams lp;
+    lp.type = "Clip";
+    lp.name = "clipLayer";
+    lp.set("min", -1.0);
+    lp.set("max", 1.0);
+
+    Ptr<ReLU6Layer> layer = ReLU6Layer::create(lp);
+
+    std::vector<int> input_shape = {1, 3};
+    std::vector<int> output_shape = {1, 3};
+    if (batch_size == 0){
+        input_shape.erase(input_shape.begin());
+        output_shape.erase(output_shape.begin());
+    }
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 2.0);
+    cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 1.0);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+}
+INSTANTIATE_TEST_CASE_P(/*nothing*/, Layer_Clip_1d_Test,
+/*operation*/           Values(0, 1));
+
+// WORKING FOR 1D
+TEST(Layer_Scale_1d_Test, Accuracy)
+{
+    std::string mode = "scale";
+    bool bias_term = false;
+    int axis = 0;
+
+    LayerParams lp;
+    lp.type = "Scale";
+    lp.name = "scaleLayer";
+    lp.set("axis", axis);
+    lp.set("mode", mode);
+    lp.set("bias_term", bias_term);
+
+    Ptr<ScaleLayer> layer = ScaleLayer::create(lp);
+
+    std::vector<int> input_shape = {1, 3};
+    std::vector<int> output_shape = {1, 3};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F, 1.0);
+    cv::Mat weight = cv::Mat(output_shape, CV_32F, 2.0);
+
+    cv::Mat output_ref = cv::Mat(output_shape, CV_32F, 2.0);
+
+    std::vector<Mat> inputs{input, weight};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    normAssert(output_ref, outputs[0]);
+}
+
 // WORKING FOR 1D
 TEST(Layer_Reshape_1d_Test, Accuracy)
 {
