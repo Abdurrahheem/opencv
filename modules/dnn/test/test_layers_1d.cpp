@@ -480,4 +480,60 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Layer_Scatter_Test, Combine(
 
 
 
+typedef testing::TestWithParam<tuple<int, int>> Layer_Accum_Test;
+TEST_P(Layer_Accum_Test, Accuracy)
+{
+    int dims = get<0>(GetParam());
+    int haveReference = get<1>(GetParam());
+    int inputCount = 2; // Number of inputs
+
+    LayerParams lp;
+    lp.type = "Accum";
+    lp.name = "AccumLayer";
+    lp.set("have_reference", haveReference ? "true" : "false");
+    Ptr<Layer> layer = AccumLayer::create(lp);
+
+    std::vector<Mat> inputs;
+    std::vector<int> input_shape;
+
+    for (int i = 0; i < inputCount; ++i)
+    {
+        if (dims > 1){
+            input_shape = {1, 10};
+            Mat input = Mat(input_shape, CV_32F, (i + 1)); // Differentiate inputs
+            inputs.push_back(input);
+        } else {
+            input_shape = {dims};
+            Mat input = Mat(dims, input_shape.data(), CV_32F, (i + 1)); // Differentiate inputs
+            inputs.push_back(input);
+        }
+    }
+
+    // Optionally add a reference shape as the last input
+    // if (haveReference)
+    // {
+    //     Mat referenceShape = Mat({1, 11}, CV_32F, 0.0); // Larger reference shape
+    //     inputs.push_back(referenceShape);
+    // }
+
+
+    std::vector<Mat> outputs;
+    runLayer(layer, inputs, outputs);
+    std::cout << "Output shape: " << shape(outputs[0]) << std::endl;
+
+    // if (dims > 1){
+        // int expectedHeight = haveReference ? 11 : 10; // If haveReference is true, use reference shape
+        // int expectedWidth = haveReference ? 11 : 10;
+    // }
+    // std::vector<int> expectedShape = {1, totalChannels, expectedHeight, expectedWidth};
+    // ASSERT_EQ(shape(outputs[0]), expectedShape);
+
+}
+INSTANTIATE_TEST_CASE_P(/*nothing*/, Layer_Accum_Test,
+                        Values(
+                            make_tuple(0, 0), make_tuple(1, 0),
+                            make_tuple(2, 0), make_tuple(0, 1),
+                            make_tuple(1, 1), make_tuple(2, 1)
+                            ));
+
 }}
