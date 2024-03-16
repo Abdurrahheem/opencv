@@ -245,4 +245,29 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Layer_Elemwise_1d_Test, Combine(
 /*operation*/           Values("div", "prod", "max", "min", "sum")
 ));
 
+TEST(Layer_Flatten_Test, Accuracy) {
+
+    LayerParams lp;
+    lp.type = "Flatten";
+    lp.name = "flattenLayer";
+    Ptr<FlattenLayer> layer = FlattenLayer::create(lp);
+
+    std::vector<int> input_shape = {1};
+    std::vector<int> output_shape = {0};
+
+    cv::Mat input = cv::Mat(input_shape, CV_32F);
+    cv::randu(input, 0.0, 1.0);
+    cv::Mat output_ref(0, output_shape.data(), CV_32F, input.data);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+
+    runLayer(layer, inputs, outputs);
+    std::cout << outputs[0] << std::endl;
+    std::cout << output_ref << std::endl;
+    ASSERT_EQ(shape(output_ref), shape(outputs[0]));
+    normAssert(output_ref, outputs[0]);
+}
+
+
 }}
