@@ -276,17 +276,20 @@ public:
 
         CV_Assert(blobs.size() >= 2);
         CV_Assert(inputs.size() == 1);
-
+        std::cout << "inputs[0] shape " << inputs[0].size << std::endl;
+        std::cout << "outputs[0] shape " << outputs[0].size << std::endl;
+        std::cout << "inputs[0] shape " << shape(inputs[0]) << std::endl;
+        std::cout << "outputs[0] shape " << shape(outputs[0]) << std::endl;
         Mat &inpBlob = inputs[0];
         int planeSize = 1;
         for (size_t i = 2; i < inpBlob.dims; i++) {
             planeSize *= inpBlob.size[i];
         }
-
+        std::cout << "outputs size: " << outputs.size() << std::endl;
         for (size_t ii = 0; ii < outputs.size(); ii++)
         {
             Mat &outBlob = outputs[ii];
-
+            std::cout << "outBlob size: " << outBlob.size << std::endl;
             for(int num = 0; num < outBlob.size[0]; num++)
             {
                 for (int n = 0; n < outBlob.size[1]; n++)

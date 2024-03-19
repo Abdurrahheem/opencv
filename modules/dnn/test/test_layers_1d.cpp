@@ -245,4 +245,48 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Layer_Elemwise_1d_Test, Combine(
 /*operation*/           Values("div", "prod", "max", "min", "sum")
 ));
 
+
+TEST(Layer_BatchNorm_Test, Accuracy) {
+
+    LayerParams lp;
+    lp.type = "BatchNorm";
+    lp.name = "bn";
+
+    // working case for 1D [1 x 1] input
+    // const int ch = 1;
+    // Mat mean(1, ch, CV_32F), var(1, ch, CV_32F), weights(1, ch, CV_32F);
+    // randu(mean, 0, 1);
+    // randu(var, 0, 1);
+    // randu(weights, 0, 1);
+
+    // not working case for 0D input
+    int dims = 1;
+    std::vector<int> input_shape = {dims};
+    Mat mean(dims, input_shape.data(), CV_32F, 1.0), var(dims, input_shape.data(), CV_32F, 1.0), weights(dims, input_shape.data(), CV_32F, 1.0);
+
+    lp.set("has_weights", false);
+    lp.set("has_bias", false);
+
+    lp.blobs.push_back(mean);
+    lp.blobs.push_back(var);
+
+    Ptr<BatchNormLayer> layer = BatchNormLayer::create(lp);
+
+    // std::vector<int> input_shape = {1, ch};
+    // cv::Mat input(input_shape, CV_32F, 1.0);
+    cv::Mat input(dims, input_shape.data(), CV_32F, 1.0);
+    cv::randn(input, 0.0, 1.0);
+
+    // cv::Mat output_ref = (input - mean) / cv::sqrt(var + 1e-5);
+
+    std::vector<Mat> inputs{input};
+    std::vector<Mat> outputs;
+    runLayer(layer, inputs, outputs);
+
+    std::cout << outputs[0] << std::endl;
+
+
+}
+
+
 }}
