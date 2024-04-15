@@ -603,4 +603,38 @@ INSTANTIATE_TEST_CASE_P(/*nothting*/, Layer_FullyConnected_Test,
                             std::vector<int>({4})
 ));
 
+typedef testing::TestWithParam<tuple<std::vector<int>>> Layer_MaxUnpool_Test;
+TEST_P(Layer_MaxUnpool_Test, Accuracy_01D)
+{
+    std::vector<int> input_shape = get<0>(GetParam());
+
+    LayerParams lp;
+    lp.type = "MaxUnpool";
+    lp.name = "MaxUnpoolLayer";
+    lp.set("pool_k_w", 3);
+    lp.set("pool_k_h", 0);
+    lp.set("pool_pad_w", 2);
+    lp.set("pool_pad_h", 0);
+    lp.set("pool_stride_w", 1);
+    lp.set("pool_stride_h", 1);
+
+    Ptr<Layer> layer = MaxUnpoolLayer::create(lp);
+
+    Mat input(input_shape.size(), input_shape.data(), CV_32F);
+    randn(input, 0, 1);
+    Mat indices = Mat(input_shape.size(), input_shape.data(), CV_32S);
+
+    std::vector<Mat> inputs{input, indices};
+    std::vector<Mat> outputs;
+    runLayer(layer, inputs, outputs);
+}
+INSTANTIATE_TEST_CASE_P(/*nothting*/, Layer_MaxUnpool_Test,
+                        testing::Values(
+                            std::vector<int>({4})
+));
+
+
+
+
+
 }}
