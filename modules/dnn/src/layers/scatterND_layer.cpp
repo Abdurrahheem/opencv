@@ -51,6 +51,9 @@ public:
                                  std::vector<MatShape> &internals) const CV_OVERRIDE
     {
         CV_CheckEQ(inputs.size(), 3ull, "ScatterND: require three inputs.");
+        std::cout << "inputs[0]: " << inputs[0] << std::endl;
+        std::cout << "inputs[1]: " << inputs[1] << std::endl;
+        std::cout << "inputs[2]: " << inputs[2] << std::endl;
 
         size_t r = inputs[0].size(), q = inputs[1].size(), p = inputs[2].size(), k = inputs[1].back();
         CV_CheckEQ(r + q - inputs[1].back() - 1, p, "ScatterND: updates should have rank of data.dims + indices.dims - indices.size[-1] - 1");
